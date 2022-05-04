@@ -1,5 +1,5 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
-import { QldbDriver, Result } from 'amazon-qldb-driver-nodejs';
+import { QldbDriver, Result, RetryConfig, TransactionExecutor } from 'amazon-qldb-driver-nodejs';
 import { QLDB_DRIVER_TOKEN } from './tokens';
 
 @Injectable()
@@ -40,6 +40,10 @@ export class QldbQueryService {
     const result = await this.execute(statement, ...parameters);
 
     return this.mapResultsToObjects<T>(result, subproperty)?.[0];
+  }
+
+  async queryTransactionally<T>(callback: (txn: TransactionExecutor) => Promise<T>): Promise<T> {
+    return await this.driver.executeLambda(callback)
   }
 
   async execute(statement: string, ...parameters: any[]): Promise<Result> {
